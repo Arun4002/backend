@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """PDF Accessibility Checker — Flask Backend (with error locations)"""
-
+import os
 from flask import Flask, request, jsonify, send_from_directory, send_file
 import io, os, re
 from report_generator import generate_pdf_report
@@ -1234,8 +1234,12 @@ def serve_react(path):
     if path and os.path.exists(os.path.join(build_dir, path)):
         return send_from_directory(build_dir, path)
     return send_from_directory(build_dir, "index.html")
+@app.route("/")
+def home():
+    return "Flask app is running!"
 
 
 if __name__ == "__main__":
-    print("\n* PDF Accessibility Checker running at http://localhost:5000\n")
-    app.run(debug=False, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+    
