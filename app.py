@@ -1186,6 +1186,62 @@ def run_checks(pdf_bytes: bytes) -> list:
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
+# @app.after_request
+# def add_cors(response):
+#     response.headers["Access-Control-Allow-Origin"]  = "*"
+#     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+#     response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+#     return response
+
+# @app.route("/check", methods=["POST", "OPTIONS"])
+# def check():
+#     if request.method == "OPTIONS":
+#         return jsonify({}), 200
+#     if "file" not in request.files:
+#         return jsonify({"error": "No file uploaded"}), 400
+#     f = request.files["file"]
+#     if not f.filename.lower().endswith(".pdf"):
+#         return jsonify({"error": "Only PDF files are supported"}), 400
+#     results = run_checks(f.read())
+#     return jsonify({"results": results, "filename": f.filename})
+
+# @app.route("/report", methods=["POST", "OPTIONS"])
+# def report():
+#     if request.method == "OPTIONS":
+#         return jsonify({}), 200
+#     data = request.get_json()
+#     if not data or "results" not in data or "filename" not in data:
+#         return jsonify({"error": "Invalid request data"}), 400
+#     results = data["results"]
+#     filename = data["filename"]
+#     try:
+#         pdf_bytes = generate_pdf_report(results, filename)
+#         base_name = os.path.splitext(filename)[0]
+#         report_name = f"accessibility_report_{base_name}.pdf"
+#         return send_file(
+#             io.BytesIO(pdf_bytes),
+#             mimetype="application/pdf",
+#             as_attachment=True,
+#             download_name=report_name
+#         )
+#     except Exception as e:
+#         return jsonify({"error": f"Failed to generate report: {str(e)}"}), 500
+
+# @app.route("/", defaults={"path": ""})
+# @app.route("/<path:path>")
+# def serve_react(path):
+#     build_dir = os.path.join(os.path.dirname(__file__), "../frontend/build")
+#     if path and os.path.exists(os.path.join(build_dir, path)):
+#         return send_from_directory(build_dir, path)
+#     return send_from_directory(build_dir, "index.html")
+
+
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 5000))
+#     app.run(host="0.0.0.0", port=port)
+    
+# ── Routes ─────────────────────────────────────────────────────────────────────
+
 @app.after_request
 def add_cors(response):
     response.headers["Access-Control-Allow-Origin"]  = "*"
@@ -1231,12 +1287,18 @@ def report():
 @app.route("/<path:path>")
 def serve_react(path):
     build_dir = os.path.join(os.path.dirname(__file__), "../frontend/build")
-    if path and os.path.exists(os.path.join(build_dir, path)):
-        return send_from_directory(build_dir, path)
-    return send_from_directory(build_dir, "index.html")
+    index_file = os.path.join(build_dir, "index.html")
+    
+    # If React build exists, serve it
+    if os.path.exists(index_file):
+        if path and os.path.exists(os.path.join(build_dir, path)):
+            return send_from_directory(build_dir, path)
+        return send_from_directory(build_dir, "index.html")
+    
+    # No React build — just confirm backend is alive
+    return jsonify({"status": "ok", "message": "PDF Accessibility Checker backend is running."}), 200
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-    
