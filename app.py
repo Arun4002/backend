@@ -1234,9 +1234,6 @@ def serve_react(path):
     if path and os.path.exists(os.path.join(build_dir, path)):
         return send_from_directory(build_dir, path)
     return send_from_directory(build_dir, "index.html")
-@app.route("/")
-def home():
-    return "Flask app is running!"
 
 
 if __name__ == "__main__":
